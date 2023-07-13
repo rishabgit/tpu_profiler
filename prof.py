@@ -1,8 +1,9 @@
+# run `export TPU_NAME=local` in bash first
 import tensorflow as tf
 import os
 import tensorflow_datasets as tfds
 
-resolver = tf.distribute.cluster_resolver.TPUClusterResolver(tpu='')
+resolver = tf.distribute.cluster_resolver.TPUClusterResolver()
 tf.config.experimental_connect_to_cluster(resolver)
 # This is the TPU initialization code that has to be at the beginning.
 tf.tpu.experimental.initialize_tpu_system(resolver)
@@ -64,7 +65,9 @@ def get_dataset(batch_size, is_training=True):
   dataset = dataset.batch(batch_size)
 
   return dataset
-
+tf.profiler.experimental.server.start(6000)
+logdir_path = "logs"
+tf.profiler.experimental.start(logdir_path)
 with strategy.scope():
   model = create_model()
   model.compile(optimizer='adam',
@@ -85,5 +88,6 @@ model.fit(train_dataset,
           steps_per_epoch=steps_per_epoch,
           validation_data=test_dataset,
           validation_steps=validation_steps)
+tf.profiler.experimental.stop()
 
 print('Training complete')
