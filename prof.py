@@ -1,5 +1,6 @@
 # run `export TPU_NAME=local` in bash first
 import tensorflow as tf
+import tensorflow.compat.v2 as tf2
 import os
 import tensorflow_datasets as tfds
 
@@ -67,7 +68,9 @@ def get_dataset(batch_size, is_training=True):
   return dataset
 tf.profiler.experimental.server.start(6000)
 logdir_path = "logs"
-tf.profiler.experimental.start(logdir_path)
+options = tf.profiler.experimental.ProfilerOptions(host_tracer_level = 3,
+                                                   python_tracer_level = 0,
+                                                   device_tracer_level = 1)
 with strategy.scope():
   model = create_model()
   model.compile(optimizer='adam',
@@ -83,6 +86,7 @@ validation_steps = 10000 // batch_size
 train_dataset = get_dataset(batch_size, is_training=True)
 test_dataset = get_dataset(batch_size, is_training=False)
 
+tf.profiler.experimental.start(logdir_path, options = options)
 model.fit(train_dataset,
           epochs=5,
           steps_per_epoch=steps_per_epoch,
